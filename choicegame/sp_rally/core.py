@@ -32,6 +32,7 @@ class SteampunkRally(choicegame.Game):
         self.started = False
 
     def start(self):
+        self.started = False
         yield ChooseNumberPlayers(self)
 
         self.players = [Player(self, i+1) for i in range(self.n_players)]

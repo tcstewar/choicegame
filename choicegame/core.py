@@ -9,7 +9,19 @@ class FreeformAction(object):
 class Game(object):
     def __init__(self):
         self.choices = []
+        self.pending_choices = []
         self.loop = None
+
+    def next_choice(self, text):
+        if len(self.pending_choices) > 0:
+            return self.pending_choices.pop(0)
+        else:
+            return raw_input(text)
+
+    def reset(self, pending_choices=[]):
+        self.pending_choices = pending_choices
+        self.choices = []
+
 
     def run(self):
 
@@ -28,8 +40,9 @@ class Game(object):
             if isinstance(act, FreeformAction):
                 while True:
                     try:
-                        c = raw_input(act.text)
+                        c = self.next_choice(act.text)
                         act.perform(c)
+                        self.choices.append(c)
                         break
                     except:
                         pass
@@ -42,15 +55,30 @@ class Game(object):
                 while True:
                     for i, a in enumerate(valid_actions):
                         print('%2d: %s' % (i+1, a.text()))
-                    c = raw_input('Choose: ')
+                    try:
+                        c = self.next_choice('Choose: ')
+                    except EOFError:
+                        # ctrl-Z
+                        c = 'u'
+                    if c == 'u':
+                        self.reset(self.choices[:-1])
+                        gen = self.start()
+                        chosen = None
+                        #import ipdb
+                        #ipdb.set_trace()
+                        break
+
+
                     try:
                         c = int(c) - 1
                     except ValueError:
                         continue
                     if 0 <= c < len(valid_actions):
                         chosen = valid_actions[c]
+                        self.choices.append('%d' % (c+1))
                         break
-                chosen.perform()
+                if chosen is not None:
+                    chosen.perform()
 
 
 
